@@ -11,12 +11,19 @@ GeoDILI 模型使用了预训练的基于 3D 空间结构的图神经网络（GN
 
 目录索引：
 cached_data：bbbp，dilirank，diliset，rega，四种数据库的npz格式数据文件
+
 chemrl_downstream_datasets：diliset 数据库csv数据文件（一列为分子的smile式，一列为标签（1，0）
+
 data_pro/random/  : 包含四种数据库用于训练和测试的npy数据文件
+
 model_configs ：是网络的配置文件：json格式（在网络训练中具体用到超参数设置，自定义的参数设置等）
+
 pahelix ：使用pgl来构建网络的一些模块的具体源代码吗？
+
 pretrain_models-chemrl_gem：预训练网络的参数文件？pdparams后缀
+
 random_split ： dilirank_finetune 的数据划分（训练，测试，的smile label)
+
 src : model.py featurizer.py  utils.py  
 
 
