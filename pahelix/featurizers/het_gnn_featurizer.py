@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-| Featurizers for DDI Heterogenous graph.
+| Featurizers for DDI Heterogenous graph.  #“用于药物-药物相互作用（DDI）异质图的特征化工具”。
 """
 
 import numpy as np
@@ -33,15 +33,18 @@ class DDiFeaturizer(object):
     def collate_fn(self, ddi_data, dti_data, ppi_data, features):
         """Aggregate all needed nodes into a Hetrogenous graph"""
 
-        drug_feat = pd.read_csv(features, index_col=0)
-        drug_feat = drug_feat[~drug_feat.index.duplicated()]
+        drug_feat = pd.read_csv(features, index_col=0) #index_col=0 表示将 CSV 文件的第一列作为数据框（DataFrame）的索引
+        drug_feat = drug_feat[~drug_feat.index.duplicated()] #代码用于去除重复索引的行。drug_feat.index.duplicated() 会返回一个布尔数组，指示哪些索引是重复的。
+        使用 ~ 运算符取反后，表示选择那些不重复的索引对应的行
         drug_feat = drug_feat.fillna(0)
-        drug_feat.replace([np.inf, -np.inf], 0, inplace=True)
+        drug_feat.replace([np.inf, -np.inf], 0, inplace=True) #将数据框中所有的正无穷大 (np.inf) 和负无穷大 (-np.inf) 替换为 0
 
-        nm = StandardScaler() 
-        scaled_feat = pd.DataFrame(nm.fit_transform(drug_feat))
+        nm = StandardScaler()  #StandardScaler 是 scikit-learn 库中的一个类，用于标准化数据。标准化的过程是将数据转换为均值为 0 和标准差为 1 的分布。
+        scaled_feat = pd.DataFrame(nm.fit_transform(drug_feat))  #nm.fit_transform(drug_feat) 对 drug_feat 数据框中的特征进行标准化处理。
+        fit_transform 方法会计算数据的均值和标准差，然后用这些统计量对数据进行标准化。
         scaled_feat = scaled_feat.fillna(0)
-        scaled_feat.index = drug_feat.index
+        scaled_feat.index = drug_feat.index  #将标准化后的数据框 scaled_feat 的索引设置为原始数据框 drug_feat 的索引。
+        这是为了确保标准化后的数据框与原始数据框具有相同的索引，使得数据对齐不会出现问题。
 
         edges = {'dds': [], 'dti': [], 'ppi': []}
         ddi_nn, ddi_nodes = num_nodes_stat(ddi_data) 
@@ -123,7 +126,7 @@ def nx_graph_build(hg, nodes_dict, label):
     """
     nodes_dict = {v:k for k, v in nodes_dict.items()}
     g = nx.Graph()
-    for i in hg['dds'].edges:
+    for i in hg['dds'].edges:                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                m
         edge = [(nodes_dict[i[0]], nodes_dict[i[1]]) + ({'weight': label[(nodes_dict[i[0]], nodes_dict[i[1]])]}, )]
         g.add_edges_from(list(edge))
     
