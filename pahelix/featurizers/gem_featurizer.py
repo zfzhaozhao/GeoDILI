@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-| Featurizers for pretrain-gnn.
+| Featurizers for pretrain-gnn.        用于与训练gnn的特征
 
 | Adapted from https://github.com/snap-stanford/pretrain-gnns/tree/master/chem/utils.py
 """
@@ -34,7 +34,7 @@ def md5_hash(string):
     """tbd"""
     md5 = hashlib.md5(string.encode('utf-8')).hexdigest()
     return int(md5, 16)
-
+#计算输入字符串的 MD5 哈希值，并将结果以整数形式返回。MD5 哈希值通常用于数据完整性检查和快速数据检索，而将其转换为整数则可能用于进一步的数据处理或比较。
 
 def mask_context_of_geognn_graph(
         g, 
@@ -45,7 +45,7 @@ def mask_context_of_geognn_graph(
         subgraph_num=None,
         version='gem'):
     """tbd"""
-    def get_subgraph_str(g, atom_index, nei_atom_indices, nei_bond_indices):
+    def get_subgraph_str(g, atom_index, nei_atom_indices, nei_bond_indices):  #nei_atom_indices：当前节点的邻居节点的索引。 nei_bond_indices：当前节点的邻居节点之间的边的索引。
         """tbd"""
         atomic_num = g.node_feat['atomic_num'].flatten()
         bond_type = g.edge_feat['bond_type'].flatten()
@@ -53,6 +53,10 @@ def mask_context_of_geognn_graph(
         subgraph_str += 'N' + ':'.join([str(x) for x in np.sort(atomic_num[nei_atom_indices])])
         subgraph_str += 'E' + ':'.join([str(x) for x in np.sort(bond_type[nei_bond_indices])])
         return subgraph_str
+#假设我们有一个图 g，其中节点特征 atomic_num 为 [1, 6, 8]，边特征 bond_type 为 [1, 2]，且 atom_index = 1（当前节点为原子序号 6）
+，nei_atom_indices = [0, 2]（邻居节点的原子序号为 1 和 8），nei_bond_indices = [0]（邻居节点之间的边的类型为 1）。那么函数的返回值会是：
+'A6N1:8E1'
+就是用来提取查询节点的邻居节点，邻居边的信息
 
     g = deepcopy(g)
     N = g.num_nodes
@@ -63,6 +67,9 @@ def mask_context_of_geognn_graph(
     if target_atom_indices is None:
         masked_size = max(1, int(N * mask_ratio))   # at least 1 atom will be selected.
         target_atom_indices = np.random.choice(full_atom_indices, size=masked_size, replace=False)
+ #np.random.choice 是 NumPy 库中的一个函数，用于从指定的一维数组中随机选择元素。 full_atom_indices：这是一个一维数组，包含了所有可能的原子索引。
+size=masked_size：指定了要从 full_atom_indices 中随机选择多少个索引。masked_size 是一个整数，表示所需的索引数量。
+replace=False：指定在选择过程中不允许重复选择。即每个选中的索引在结果中只能出现一次。
     target_labels = []
     Cm_node_i = []
     masked_bond_indices = []
