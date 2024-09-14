@@ -1,0 +1,13 @@
+__pycache__ ：是Python解释器已经把编译的字节码放在__pycache__文件夹中，这样以后再次运行的话，如果被调用的模块未发生改变，那就直接跳过编译这一步，直接去__pycache__文件夹中去运行相关的 *.pyc 文件，大大缩短了项目运行前的准备时间。
+
+__init__.py :初始化导入的数据集
+
+inmemory_dataset.py  ：把数据转为内存数据对象 （用于处理每个数据集里生成的数据字典对象，保存为npz数据）
+
+bbbp_dataset.py  ： 血脑屏障穿透数据集处理，返回只有一个值：分子的smile列表，
+
+dilirank_dataset.py    diliset_dataset.py  rega_dataset.py    test_dataset.py 是类似的代码 同 bbbp_dataset.py （不再深入写笔记）
+
+
+
+
