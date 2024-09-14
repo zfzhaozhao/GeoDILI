@@ -96,9 +96,11 @@ replace=False：指定在选择过程中不允许重复选择。即每个选中�
     target_atom_indices = np.array(target_atom_indices)
     target_labels = np.array(target_labels)
     Cm_node_i = np.concatenate(Cm_node_i, 0)
+#Cm_node_i 是一个列表或数组的列表（或者更广义的序列）。np.concatenate 将这些序列在第一个维度（即按行）连接起来，形成一个大的 NumPy 数组。
+这通常用于将多个数组合并为一个大数组，以便进行批量操作。
     masked_bond_indices = np.concatenate(masked_bond_indices, 0)
     for name in g.node_feat:
-        g.node_feat[name][Cm_node_i] = mask_value
+        g.node_feat[name][Cm_node_i] = mask_value  #mask_value = 0
     for name in g.edge_feat:
         g.edge_feat[name][masked_bond_indices] = mask_value
 
@@ -120,18 +122,24 @@ def get_pretrain_bond_angle(edges, atom_poses):
     def _get_angle(vec1, vec2):
         norm1 = np.linalg.norm(vec1)
         norm2 = np.linalg.norm(vec2)
+        #计算向量 vec1 的范数（或长度），即 ∥vec1∥。np.linalg.norm 是 NumPy 中计算向量的欧几里得范数的方法。
         if norm1 == 0 or norm2 == 0:
             return 0
         vec1 = vec1 / (norm1 + 1e-5)    # 1e-5: prevent numerical errors
         vec2 = vec2 / (norm2 + 1e-5)
+        #将向量 vec1 归一化（单位化），即将其除以其范数。1e-5 是一个小的常数，用来防止除零错误。
         angle = np.arccos(np.dot(vec1, vec2))
+        np.dot(vec1, vec2):
+
+计算归一化后向量 vec1 和 vec2 的点积（内积）。对于单位向量，点积等于它们夹角的余弦值。
+使用 np.arccos 计算点积的反余弦值，以得到夹角（单位为弧度）。np.arccos 函数将余弦值转换为角度。
         return angle
     def _add_item(
             node_i_indices, node_j_indices, node_k_indices, bond_angles, 
             node_i_index, node_j_index, node_k_index):
         node_i_indices += [node_i_index, node_k_index]
         node_j_indices += [node_j_index, node_j_index]
-        node_k_indices += [node_k_index, node_i_index]
+        node_k_indices += [node_k_index, node_i_index] #不是很明白
         pos_i = atom_poses[node_i_index]
         pos_j = atom_poses[node_j_index]
         pos_k = atom_poses[node_k_index]
