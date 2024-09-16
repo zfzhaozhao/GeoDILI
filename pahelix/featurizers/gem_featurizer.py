@@ -13,7 +13,7 @@
 # limitations under the License.
 
 """
-| Featurizers for pretrain-gnn.        用于与训练gnn的特征
+| Featurizers for pretrain-gnn.        用于预训练gnn的特征
 
 | Adapted from https://github.com/snap-stanford/pretrain-gnns/tree/master/chem/utils.py
 """
@@ -74,7 +74,7 @@ replace=False：指定在选择过程中不允许重复选择。即每个选中�
     Cm_node_i = []
     masked_bond_indices = []
     for atom_index in target_atom_indices:
-        left_nei_bond_indices = full_bond_indices[g.edges[:, 0] == atom_index]
+        left_nei_bond_indices = full_bond_indices[g.edges[:, 0] == atom_index]  #这里我还是觉得应该写成”left_nei_bond_indices = full_bond_indices[g.edges[:, 0] == g.nodes[atom_index]]
         right_nei_bond_indices = full_bond_indices[g.edges[:, 1] == atom_index]
         nei_bond_indices = np.append(left_nei_bond_indices, right_nei_bond_indices)
         left_nei_atom_indices = g.edges[left_nei_bond_indices, 1]
@@ -90,14 +90,14 @@ replace=False：指定在选择过程中不允许重复选择。即每个选中�
         
         target_labels.append(target_label)
         Cm_node_i.append([atom_index])
-        Cm_node_i.append(nei_atom_indices)
+        Cm_node_i.append(nei_atom_indices)  #不是很明白为啥要放在一个列表
         masked_bond_indices.append(nei_bond_indices)
     
     target_atom_indices = np.array(target_atom_indices)
     target_labels = np.array(target_labels)
     Cm_node_i = np.concatenate(Cm_node_i, 0)
 #Cm_node_i 是一个列表或数组的列表（或者更广义的序列）。np.concatenate 将这些序列在第一个维度（即按行）连接起来，形成一个大的 NumPy 数组。
-这通常用于将多个数组合并为一个大数组，以便进行批量操作。
+这通常用于将多个数组合并为一个大数组，以便进行批量操作。 原始数组的行数被拼接在了一起，列数保持不变。
     masked_bond_indices = np.concatenate(masked_bond_indices, 0)
     for name in g.node_feat:
         g.node_feat[name][Cm_node_i] = mask_value  #mask_value = 0
@@ -108,16 +108,20 @@ replace=False：指定在选择过程中不允许重复选择。即每个选中�
     full_superedge_indices = np.arange(superedge_g.num_edges)
     masked_superedge_indices = []
     for bond_index in masked_bond_indices:
-        left_indices = full_superedge_indices[superedge_g.edges[:, 0] == bond_index]
+        left_indices = full_superedge_indices[superedge_g.edges[:, 0] == bond_index]  
         right_indices = full_superedge_indices[superedge_g.edges[:, 1] == bond_index]
         masked_superedge_indices.append(np.append(left_indices, right_indices))
+        
+        #np.append(left_indices, right_indices) 将 left_indices 和 right_indices 连接成一个新的 NumPy 数组。
+masked_superedge_indices.append(...) 将这个新的数组作为一个元素追加到 masked_superedge_indices 列表中
+
     masked_superedge_indices = np.concatenate(masked_superedge_indices, 0)
     for name in superedge_g.edge_feat:
         superedge_g.edge_feat[name][masked_superedge_indices] = mask_value
     return [g, superedge_g, target_atom_indices, target_labels]
     
 
-def get_pretrain_bond_angle(edges, atom_poses):
+def get_pretrain_bond_angle(edges, atom_poses):  #获取角度的函数
     """tbd"""
     def _get_angle(vec1, vec2):
         norm1 = np.linalg.norm(vec1)
@@ -128,17 +132,17 @@ def get_pretrain_bond_angle(edges, atom_poses):
         vec1 = vec1 / (norm1 + 1e-5)    # 1e-5: prevent numerical errors
         vec2 = vec2 / (norm2 + 1e-5)
         #将向量 vec1 归一化（单位化），即将其除以其范数。1e-5 是一个小的常数，用来防止除零错误。
-        angle = np.arccos(np.dot(vec1, vec2))
-        np.dot(vec1, vec2):
-
-计算归一化后向量 vec1 和 vec2 的点积（内积）。对于单位向量，点积等于它们夹角的余弦值。
-使用 np.arccos 计算点积的反余弦值，以得到夹角（单位为弧度）。np.arccos 函数将余弦值转换为角度。
+        angle = np.arccos(np.dot(vec1, vec2)）
         return angle
+
+    计算归一化后向量 vec1 和 vec2 的点积（内积）。对于单位向量，点积等于它们夹角的余弦值。
+使用 np.arccos 计算点积的反余弦值，以得到夹角（单位为弧度）。np.arccos 函数将余弦值转换为角度。
+
     def _add_item(
             node_i_indices, node_j_indices, node_k_indices, bond_angles, 
             node_i_index, node_j_index, node_k_index):
         node_i_indices += [node_i_index, node_k_index]
-        node_j_indices += [node_j_index, node_j_index]
+        node_j_indices += [node_j_index, node_j_index] #添加 node_j_index 两次到 node_j_indices 是因为节点 j 在计算角度时充当了一个公共点的角色，😵
         node_k_indices += [node_k_index, node_i_index] #不是很明白
         pos_i = atom_poses[node_i_index]
         pos_j = atom_poses[node_j_index]
@@ -151,14 +155,17 @@ def get_pretrain_bond_angle(edges, atom_poses):
     node_j_indices = []
     node_k_indices = []
     bond_angles = []
-    for edge_i in range(E - 1):
-        for edge_j in range(edge_i + 1, E):
+    for edge_i in range(E - 1):  #因为是从0开始的，所以要-1
+        for edge_j in range(edge_i + 1, E):#循环外循环边的后一条边
             a0, a1 = edges[edge_i]
             b0, b1 = edges[edge_j]
+            外循环 edge_i 遍历每一条边。
+            内循环 edge_j 遍历当前边之后的每一条边。
             if a0 == b0 and a1 == b1:
                 continue
             if a0 == b1 and a1 == b0:
                 continue
+            排除完全相同或反向的边对，避免重复计算角度。
             if a0 == b0:
                 _add_item(
                         node_i_indices, node_j_indices, node_k_indices, bond_angles,
@@ -176,14 +183,14 @@ def get_pretrain_bond_angle(edges, atom_poses):
                         node_i_indices, node_j_indices, node_k_indices, bond_angles,
                         a0, a1, b0)
     node_ijk = np.array([node_i_indices, node_j_indices, node_k_indices])
-    uniq_node_ijk, uniq_index = np.unique(node_ijk, return_index=True, axis=1)
+    uniq_node_ijk, uniq_index = np.unique(node_ijk, return_index=True, axis=1) #np.unique 是 NumPy 库中的一个函数，用于找出数组中的唯一元素，并可以返回这些元素的索引
     node_i_indices, node_j_indices, node_k_indices = uniq_node_ijk
     bond_angles = np.array(bond_angles)[uniq_index]
     return [node_i_indices, node_j_indices, node_k_indices, bond_angles]
 
 
 class GeoPredTransformFn(object):
-    """Gen features for downstream model"""
+    """Gen features for downstream model"""  #“为下游模型生成特征”
     def __init__(self, pretrain_tasks, mask_ratio):
         self.pretrain_tasks = pretrain_tasks
         self.mask_ratio = mask_ratio
@@ -194,18 +201,21 @@ class GeoPredTransformFn(object):
         """
         node_i, node_j, node_k, bond_angles = \
                 get_pretrain_bond_angle(data['edges'], data['atom_pos'])
-        data['Ba_node_i'] = node_i
+        data['Ba_node_i'] = node_i #是索引
         data['Ba_node_j'] = node_j
         data['Ba_node_k'] = node_k
+        # 将节点索引列表添加到 DataFrame 中，作为名为 'Ba_node_' 的一列
         data['Ba_bond_angle'] = bond_angles
 
         data['Bl_node_i'] = np.array(data['edges'][:, 0])
         data['Bl_node_j'] = np.array(data['edges'][:, 1])
         data['Bl_bond_length'] = np.array(data['bond_length'])
-
+'Bl_node_i' 和 'Bl_node_j' 存储了边的起始节点和终止节点的信息。
+'Bl_bond_length' 存储了边的长度信息。
         n = len(data['atom_pos'])
         dist_matrix = pairwise_distances(data['atom_pos'])
-        indice = np.repeat(np.arange(n).reshape([-1, 1]), n, axis=1)
+pairwise_distances(data['atom_pos']) 计算了 data['atom_pos'] 中所有原子对之间的距离，并返回一个距离矩阵。这个距离矩阵的每个元素 (i, j) 表示原子 i 和原子 j 之间的欧氏距离
+        indice = np.repeat(np.arange(n).reshape([-1, 1]), n, axis=1) #np.repeat(..., n, axis=1):对之前的列向量进行重复操作，在水平方向（列）上重复 n 次。
         data['Ad_node_i'] = indice.reshape([-1, 1])
         data['Ad_node_j'] = indice.T.reshape([-1, 1])
         data['Ad_atom_dist'] = dist_matrix.reshape([-1, 1])
@@ -252,7 +262,7 @@ class GeoPredCollateFn(object):
     def _flat_shapes(self, d):
         """TODO: reshape due to pgl limitations on the shape"""
         for name in d:
-            d[name] = d[name].reshape([-1])
+            d[name] = d[name].reshape([-1])  #使用 reshape([-1]) 将多维数组展平为一维数组是一个常见的操作
 
     def __call__(self, batch_data_list):
         """tbd"""
@@ -316,6 +326,8 @@ class GeoPredCollateFn(object):
                 Ad_atom_dist.append(data['Ad_atom_dist'])
 
             node_count += N
+            加上 node_count: 主要是为了处理节点索引的偏移，避免不同图或图的不同部分之间的索引冲突。
+调整节点索引: 在图合并或图数据处理中，确保每个节点在新的图结构中有正确的、唯一的索引。
 
         graph_dict = {}    
         feed_dict = {}
