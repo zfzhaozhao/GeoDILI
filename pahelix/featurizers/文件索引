@@ -1,3 +1,6 @@
 __init__.py 初始化导入特征
 
 gem_featurizer.py  获取特征
+
+het_gnn_featurizer.py  “用于药物-药物相互作用（DDI）异质图的特征化工具”。
+
