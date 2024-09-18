@@ -12,7 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-This is an implementation of GeoGNN:
+This is an implementation of GeoGNN:  #GeoGNN 模型的实现
 """
 import numpy as np
 
@@ -43,8 +43,10 @@ class GeoGNNBlock(nn.Layer):
         self.last_act = last_act
 
         self.gnn = GIN(embed_dim)
-        self.norm = nn.LayerNorm(embed_dim)
+        self.norm = nn.LayerNorm(embed_dim)  
         self.graph_norm = GraphNorm()
+        #LayerNorm: 对于深度学习中的常规归一化，特别是处理序列或特征的归一化，LayerNorm 是有必要的。
+        #GraphNorm: 对于图神经网络中的图数据归一化，GraphNorm 可以提高模型的效果。如果你的应用涉及图数据，它是必要的。
         if last_act:
             self.act = nn.ReLU()
         self.dropout = nn.Dropout(p=dropout_rate)
@@ -57,7 +59,7 @@ class GeoGNNBlock(nn.Layer):
         if self.last_act:
             out = self.act(out)
         out = self.dropout(out)
-        out = out + node_hidden
+        out = out + node_hidden    #残差网络思想，但是这个维度是一定一样吗，他经过图神经模块，没有涉及维度的改变，可直接加
         return out
 
 
@@ -77,7 +79,7 @@ class GeoGNNModel(nn.Layer):
         # self.layer_num = model_config.get('layer_num', 8)
         # self.readout = model_config.get('readout', 'max')
         self.step_size = 1e-3
-        self.embed_dim = 32
+        self.embed_dim = 32  #嵌入的维度应该和初始维度是一样的
         self.dropout_rate = 0.2
         self.layer_num = 8
         self.perturb = 0
