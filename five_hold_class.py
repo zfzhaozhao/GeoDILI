@@ -113,9 +113,15 @@ def main(args):
                     print(ext_table)
 
             v = RocCurveDisplay.from_predictions(best_label, best_pred)
-            ex_interp_tpr = np.interp(mean_fpr, v.fpr, v.tpr)
-            ex_interp_tpr[0] = 0.0
-            ex_aucs = v.roc_auc
+            ex_interp_tpr = np.interp(mean_fpr, v.fpr, v.tpr)   #v 是一个 RocCurveDisplay 实例，其中包含了计算得到的 ROC 曲线数据，如真正例率（TPR）和假正例率（FPR）。
+#这是 NumPy 的插值函数，用于根据给定的输入 x，y 数据对输入数据进行线性插值。
+# mean_fpr 是一组均匀分布的假正例率（FPR），可能是为了在不同的模型或实验中进行比较。
+# v.fpr 和 v.tpr 是从 RocCurveDisplay 对象 v 中获取的假正例率和真正例率。
+
+np.interp(mean_fpr, v.fpr, v.tpr) 通过在 v.fpr 和 v.tpr 之间进行插值，得到在 mean_fpr 位置上的真正例率（TPR）
+            ex_interp_tpr[0] = 0.0  #将插值后的真正例率的第一个值（通常对应于假正例率为0的位置）设置为0。这是因为在 ROC 曲线中，当假正例率为0时，真正例率应该也为0，这是 ROC 曲线的起点
+            ex_aucs = v.roc_auc  #v.roc_auc:这个属性包含了 ROC 曲线下面积（AUC, Area Under the Curve）的值。AUC 是一个衡量模型性能的指标，它表示模型在区分正负样本方面的能力。AUC 的值范围从0到1，越接近1表示模型性能越好。
+       
         model, encoder_opt, head_opt, criterion, collate_fn = build_model(args.encoder_lr, args.head_lr,
                                                                           args.init_params,
                                                                           [compound_encoder_config, model_config], args)
@@ -150,6 +156,9 @@ def main(args):
 
         viz = RocCurveDisplay.from_predictions(best_label, best_pred, name="fold {}".format(n), alpha=0.3, lw=1,
                                                ax=ax)
+#RocCurveDisplay.from_predictions 方法用于从真实标签和预测分数生成 ROC 曲线的可视化对象。它会计算假正例率（FPR）和真正例率（TPR），并准备好绘制 ROC 曲线。
+#指定绘图的 matplotlib 轴对象（axis object）。ax 是一个 matplotlib 的 Axes 对象，用于在指定的图形区域中绘制 ROC 曲线。这允许你在同一图形中绘制多个 ROC 曲线，以便进行比较。
+
         interp_tpr = np.interp(mean_fpr, viz.fpr, viz.tpr)
         interp_tpr[0] = 0.0
         tprs.append(interp_tpr)
@@ -205,6 +214,8 @@ def data_process(task_names, args):
         if args.five_fold == True:
             train_dataset_ = np.array(train_dataset_)
             KF = StratifiedKFold(n_splits=5, shuffle=True, random_state=1024)
+            #StratifiedKFold 是 scikit-learn 库中的一个类，用于进行分层 K 折交叉验证。与普通的 K 折交叉验证不同，StratifiedKFold 确保每个折中类别的分布与整个数据集中的类别分布一致。
+            #这对于分类任务尤其重要，因为它可以确保每个折中正负样本的比例大致相同，从而使得模型评估更加可靠。
             n = 0
             for t in KF.split(train_dataset_, label_s):
                 n += 1
