@@ -14,18 +14,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-downstream featurizer
+downstream featurizer 
 """
 
 import numpy as np
 import pgl
 from rdkit.Chem import AllChem
 
-from pahelix.utils.compound_tools import mol_to_geognn_graph_data_MMFF3d
+from pahelix.utils.compound_tools import mol_to_geognn_graph_data_MMFF3d  #是用来生成原始的图数据函数
 
 
 class DownstreamTransformFn(object):
-    """Gen features for downstream model"""
+    """Gen features for downstream model"""  #为下游任务生成特征数据  ，但从整个代码来看，应该是获得从分子数据转为图数据
     def __init__(self, is_inference=False):
         self.is_inference = is_inference
 
@@ -47,7 +47,7 @@ class DownstreamTransformFn(object):
         if not self.is_inference:
             data['label'] = raw_data['label'].reshape([-1])
         data['smiles'] = smiles
-        return data
+        return data      
 
 
 class DownstreamCollateFn(object):
