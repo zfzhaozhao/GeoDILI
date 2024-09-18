@@ -27,7 +27,7 @@ def training(args, model, train_dataset, collate_fn, criterion, encoder_opt, hea
     list_loss = []
     model.train()
     for atom_bond_graphs, bond_angle_graphs, valids, labels in data_gen:
-        if len(labels) < args.batch_size * 0.5:
+        if len(labels) < args.batch_size * 0.5:  #如果批次不足设定批次大小的一般，舍弃
             continue
         atom_bond_graphs = atom_bond_graphs.tensor()
         bond_angle_graphs = bond_angle_graphs.tensor()
@@ -40,10 +40,16 @@ def training(args, model, train_dataset, collate_fn, criterion, encoder_opt, hea
         perturb2 = paddle.to_tensor(
             paddle.uniform([atom_bond_graphs.edge_feat['bond_dir'].shape[0], 32], min=-1e-5, max=1e-5),
             stop_gradient=False)
+        
+#生成了一个形状为 [节点数, 32] 的二维张量，张量中的每个元素都是从 [-1e-5, 1e-5] 区间内的均匀分布随机数。
+#在 PaddlePaddle 中，stop_gradient 参数用于控制是否在反向传播时计算梯度。
+#设置 stop_gradient=False 表示该张量在反向传播时会计算梯度，这意味着这个张量会参与到梯度计算中，对应的梯度会被更新
+        
         preds, graph_repr = model(atom_bond_graphs, bond_angle_graphs, perturb1,perturb2)
         loss = criterion(preds, labels)
-        loss /= 4
-
+        loss /= 4  #为什么？
+        
+#这个迭代主要是用梯度更新扰动值，不直接*梯度，防止梯度值过大，造成扰动值过大
         for _ in range(3):
             loss.backward()
             perturb_data1 = perturb1 + 1e-3 * paddle.sign(perturb1.grad)
@@ -55,6 +61,7 @@ def training(args, model, train_dataset, collate_fn, criterion, encoder_opt, hea
             preds, graph_repr = model(atom_bond_graphs, bond_angle_graphs, perturb1, perturb2)
             loss = criterion(preds, labels)
             loss /= 4
+#paddle.sign 的工作原理很简单：检查每个元素的值：如果元素大于0，结果是1。如果元素小于0，结果是-1。如果元素等于0，结果是0。
 
         loss.backward()
         head_opt.step()
@@ -67,7 +74,7 @@ def training(args, model, train_dataset, collate_fn, criterion, encoder_opt, hea
         total_label.append(labels.numpy())
         total_valid.append(valids.numpy())
         total_graph.append(graph_repr.numpy())
-    total_pred = np.concatenate(total_pred, 0).round().astype('int32')
+    total_pred = np.concatenate(total_pred, 0).round().astype('int32')  #用来四舍五入函数来处理预测的概率大小
     total_label = np.concatenate(total_label, 0).astype('int32')
     total_valid = np.concatenate(total_valid, 0)
     total_graph = np.concatenate(total_graph, 0)
@@ -90,7 +97,7 @@ def training(args, model, train_dataset, collate_fn, criterion, encoder_opt, hea
 def evaluate(args, model, test_dataset, collate_fn):
     """
     Define the evaluate function
-    In the dataset, a proportion of labels are blank. So we use a `valid` tensor
+   `valid` ten  In the dataset, a proportion of labels are blank. So we use asor
     to help eliminate these blank labels in both training and evaluation phase.
     """
     data_gen = test_dataset.get_data_loader(
